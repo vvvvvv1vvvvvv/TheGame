@@ -77,11 +77,7 @@ export const UpdatePlayer = gql`
             username: { _eq: $username }
           }
           { sc_identity_id: { _eq: $identityId } }
-          {
-            Accounts: {
-              _and: { type: { _eq: DISCORD }, identifier: { _eq: $discordId } }
-            }
-          }
+          { discord_id: { _eq: $discordId } }
         ]
       }
       _set: {
@@ -89,6 +85,7 @@ export const UpdatePlayer = gql`
         sc_identity_id: $identityId
         rank: $rank
         total_xp: $totalXp
+        discord_id: $discordId
       }
     ) {
       affected_rows
@@ -129,8 +126,8 @@ export const CreateQuestCompletion = gql`
 export const UpdateQuestStatus = gql`
   mutation UpdateQuestStatus($quest_id: uuid!, $status: QuestStatus_enum!) {
     update_quest_by_pk(
-      pk_columns: {id: $quest_id},
-       _set: { status: $status }
+      pk_columns: { id: $quest_id }
+      _set: { status: $status }
     ) {
       id
     }
@@ -138,10 +135,13 @@ export const UpdateQuestStatus = gql`
 `;
 
 export const UpdateQuestCompletionStatus = gql`
-  mutation UpdateQuestCompletionStatus($quest_completion_id: uuid!, $status: QuestCompletionStatus_enum!) {
+  mutation UpdateQuestCompletionStatus(
+    $quest_completion_id: uuid!
+    $status: QuestCompletionStatus_enum!
+  ) {
     update_quest_completion_by_pk(
-      pk_columns: {id: $quest_completion_id},
-       _set: { status: $status }
+      pk_columns: { id: $quest_completion_id }
+      _set: { status: $status }
     ) {
       id
     }
@@ -149,15 +149,18 @@ export const UpdateQuestCompletionStatus = gql`
 `;
 
 export const RejectOtherQuestCompletions = gql`
-  mutation RejectOtherQuestCompletions($accepted_quest_completion_id: uuid!, $quest_id: uuid!) {
+  mutation RejectOtherQuestCompletions(
+    $accepted_quest_completion_id: uuid!
+    $quest_id: uuid!
+  ) {
     update_quest_completion(
       where: {
         _and: [
-          { id: { _neq: $accepted_quest_completion_id } },
+          { id: { _neq: $accepted_quest_completion_id } }
           { quest_id: { _eq: $quest_id } }
         ]
-      },
-       _set: { status: REJECTED }
+      }
+      _set: { status: REJECTED }
     ) {
       affected_rows
     }

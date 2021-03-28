@@ -557,6 +557,7 @@ input CreateQuestCompletionInput {
 
 type CreateQuestCompletionOutput {
   error: String
+  quest_completion: quest_completion
   quest_completion_id: uuid
   success: Boolean!
 }
@@ -567,11 +568,13 @@ input CreateQuestInput {
   external_link: String
   guild_id: uuid!
   repetition: QuestRepetition_ActionEnum
+  skills_id: [uuid]!
   title: String!
 }
 
 type CreateQuestOutput {
   error: String
+  quest: quest
   quest_id: uuid
   success: Boolean!
 }
@@ -583,7 +586,11 @@ type guild {
   """An object relationship"""
   GuildType: GuildType!
   description: String
-  discord_invite_url: String
+  discord_id: String
+  discord_metadata(
+    """JSON select path"""
+    path: String
+  ): jsonb
 
   """An array relationship"""
   guild_accounts(
@@ -700,6 +707,7 @@ type guild {
     """filter the rows returned"""
     where: quest_bool_exp
   ): quest_aggregate!
+  status: GuildStatus_enum!
 
   """The area of focus for the guild (e.g. funding, project, etc)"""
   type: GuildType_enum!
@@ -928,6 +936,11 @@ input guild_aggregate_order_by {
   min: guild_min_order_by
 }
 
+"""append existing jsonb value of filtered columns with new jsonb value"""
+input guild_append_input {
+  discord_metadata: jsonb
+}
+
 """
 input type for inserting array relation for remote table "guild"
 """
@@ -945,7 +958,8 @@ input guild_bool_exp {
   _not: guild_bool_exp
   _or: [guild_bool_exp]
   description: String_comparison_exp
-  discord_invite_url: String_comparison_exp
+  discord_id: String_comparison_exp
+  discord_metadata: jsonb_comparison_exp
   guild_accounts: guild_account_bool_exp
   guild_players: guild_player_bool_exp
   guildname: String_comparison_exp
@@ -955,6 +969,7 @@ input guild_bool_exp {
   moloch_address: String_comparison_exp
   name: String_comparison_exp
   quests: quest_bool_exp
+  status: GuildStatus_enum_comparison_exp
   type: GuildType_enum_comparison_exp
   website_url: String_comparison_exp
 }
@@ -968,6 +983,31 @@ enum guild_constraint {
 
   """unique or primary key constraint"""
   Guild_pkey
+
+  """unique or primary key constraint"""
+  guild_discord_id_key
+}
+
+"""
+delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+"""
+input guild_delete_at_path_input {
+  discord_metadata: [String]
+}
+
+"""
+delete the array element with specified index (negative integers count from the
+end). throws an error if top level container is not an array
+"""
+input guild_delete_elem_input {
+  discord_metadata: Int
+}
+
+"""
+delete key/value pair or string element. key/value pairs are matched based on their key value
+"""
+input guild_delete_key_input {
+  discord_metadata: String
 }
 
 """
@@ -976,7 +1016,8 @@ input type for inserting data into table "guild"
 input guild_insert_input {
   GuildType: GuildType_obj_rel_insert_input
   description: String
-  discord_invite_url: String
+  discord_id: String
+  discord_metadata: jsonb
   guild_accounts: guild_account_arr_rel_insert_input
   guild_players: guild_player_arr_rel_insert_input
   guildname: String
@@ -986,6 +1027,7 @@ input guild_insert_input {
   moloch_address: String
   name: String
   quests: quest_arr_rel_insert_input
+  status: GuildStatus_enum
   type: GuildType_enum
   website_url: String
 }
@@ -993,7 +1035,7 @@ input guild_insert_input {
 """aggregate max on columns"""
 type guild_max_fields {
   description: String
-  discord_invite_url: String
+  discord_id: String
   guildname: String
   id: uuid
   join_button_url: String
@@ -1008,7 +1050,7 @@ order by max() on columns of table "guild"
 """
 input guild_max_order_by {
   description: order_by
-  discord_invite_url: order_by
+  discord_id: order_by
   guildname: order_by
   id: order_by
   join_button_url: order_by
@@ -1021,7 +1063,7 @@ input guild_max_order_by {
 """aggregate min on columns"""
 type guild_min_fields {
   description: String
-  discord_invite_url: String
+  discord_id: String
   guildname: String
   id: uuid
   join_button_url: String
@@ -1036,7 +1078,7 @@ order by min() on columns of table "guild"
 """
 input guild_min_order_by {
   description: order_by
-  discord_invite_url: order_by
+  discord_id: order_by
   guildname: order_by
   id: order_by
   join_button_url: order_by
@@ -1080,7 +1122,8 @@ ordering options when selecting data from "guild"
 input guild_order_by {
   GuildType: GuildType_order_by
   description: order_by
-  discord_invite_url: order_by
+  discord_id: order_by
+  discord_metadata: order_by
   guild_accounts_aggregate: guild_account_aggregate_order_by
   guild_players_aggregate: guild_player_aggregate_order_by
   guildname: order_by
@@ -1090,6 +1133,7 @@ input guild_order_by {
   moloch_address: order_by
   name: order_by
   quests_aggregate: quest_aggregate_order_by
+  status: order_by
   type: order_by
   website_url: order_by
 }
@@ -1283,6 +1327,11 @@ enum guild_player_update_column {
   player_id
 }
 
+"""prepend existing jsonb value of filtered columns with new jsonb value"""
+input guild_prepend_input {
+  discord_metadata: jsonb
+}
+
 """
 select columns of table "guild"
 """
@@ -1291,7 +1340,10 @@ enum guild_select_column {
   description
 
   """column name"""
-  discord_invite_url
+  discord_id
+
+  """column name"""
+  discord_metadata
 
   """column name"""
   guildname
@@ -1310,6 +1362,9 @@ enum guild_select_column {
 
   """column name"""
   name
+
+  """column name"""
+  status
 
   """column name"""
   type
@@ -1323,13 +1378,15 @@ input type for updating data in table "guild"
 """
 input guild_set_input {
   description: String
-  discord_invite_url: String
+  discord_id: String
+  discord_metadata: jsonb
   guildname: String
   id: uuid
   join_button_url: String
   logo: String
   moloch_address: String
   name: String
+  status: GuildStatus_enum
   type: GuildType_enum
   website_url: String
 }
@@ -1342,7 +1399,10 @@ enum guild_update_column {
   description
 
   """column name"""
-  discord_invite_url
+  discord_id
+
+  """column name"""
+  discord_metadata
 
   """column name"""
   guildname
@@ -1363,10 +1423,185 @@ enum guild_update_column {
   name
 
   """column name"""
+  status
+
+  """column name"""
   type
 
   """column name"""
   website_url
+}
+
+"""
+columns and relationships of "GuildStatus"
+"""
+type GuildStatus {
+  status: String!
+}
+
+"""
+aggregated selection of "GuildStatus"
+"""
+type GuildStatus_aggregate {
+  aggregate: GuildStatus_aggregate_fields
+  nodes: [GuildStatus!]!
+}
+
+"""
+aggregate fields of "GuildStatus"
+"""
+type GuildStatus_aggregate_fields {
+  count(columns: [GuildStatus_select_column!], distinct: Boolean): Int
+  max: GuildStatus_max_fields
+  min: GuildStatus_min_fields
+}
+
+"""
+order by aggregate values of table "GuildStatus"
+"""
+input GuildStatus_aggregate_order_by {
+  count: order_by
+  max: GuildStatus_max_order_by
+  min: GuildStatus_min_order_by
+}
+
+"""
+input type for inserting array relation for remote table "GuildStatus"
+"""
+input GuildStatus_arr_rel_insert_input {
+  data: [GuildStatus_insert_input!]!
+  on_conflict: GuildStatus_on_conflict
+}
+
+"""
+Boolean expression to filter rows from the table "GuildStatus". All fields are combined with a logical 'AND'.
+"""
+input GuildStatus_bool_exp {
+  _and: [GuildStatus_bool_exp]
+  _not: GuildStatus_bool_exp
+  _or: [GuildStatus_bool_exp]
+  status: String_comparison_exp
+}
+
+"""
+unique or primary key constraints on table "GuildStatus"
+"""
+enum GuildStatus_constraint {
+  """unique or primary key constraint"""
+  GuildStatus_pkey
+}
+
+enum GuildStatus_enum {
+  ACTIVE
+  INACTIVE
+  PENDING
+}
+
+"""
+expression to compare columns of type GuildStatus_enum. All fields are combined with logical 'AND'.
+"""
+input GuildStatus_enum_comparison_exp {
+  _eq: GuildStatus_enum
+  _in: [GuildStatus_enum!]
+  _is_null: Boolean
+  _neq: GuildStatus_enum
+  _nin: [GuildStatus_enum!]
+}
+
+"""
+input type for inserting data into table "GuildStatus"
+"""
+input GuildStatus_insert_input {
+  status: String
+}
+
+"""aggregate max on columns"""
+type GuildStatus_max_fields {
+  status: String
+}
+
+"""
+order by max() on columns of table "GuildStatus"
+"""
+input GuildStatus_max_order_by {
+  status: order_by
+}
+
+"""aggregate min on columns"""
+type GuildStatus_min_fields {
+  status: String
+}
+
+"""
+order by min() on columns of table "GuildStatus"
+"""
+input GuildStatus_min_order_by {
+  status: order_by
+}
+
+"""
+response of any mutation on the table "GuildStatus"
+"""
+type GuildStatus_mutation_response {
+  """number of affected rows by the mutation"""
+  affected_rows: Int!
+
+  """data of the affected rows by the mutation"""
+  returning: [GuildStatus!]!
+}
+
+"""
+input type for inserting object relation for remote table "GuildStatus"
+"""
+input GuildStatus_obj_rel_insert_input {
+  data: GuildStatus_insert_input!
+  on_conflict: GuildStatus_on_conflict
+}
+
+"""
+on conflict condition type for table "GuildStatus"
+"""
+input GuildStatus_on_conflict {
+  constraint: GuildStatus_constraint!
+  update_columns: [GuildStatus_update_column!]!
+  where: GuildStatus_bool_exp
+}
+
+"""
+ordering options when selecting data from "GuildStatus"
+"""
+input GuildStatus_order_by {
+  status: order_by
+}
+
+"""
+primary key columns input for table: "GuildStatus"
+"""
+input GuildStatus_pk_columns_input {
+  status: String!
+}
+
+"""
+select columns of table "GuildStatus"
+"""
+enum GuildStatus_select_column {
+  """column name"""
+  status
+}
+
+"""
+input type for updating data in table "GuildStatus"
+"""
+input GuildStatus_set_input {
+  status: String
+}
+
+"""
+update columns of table "GuildStatus"
+"""
+enum GuildStatus_update_column {
+  """column name"""
+  status
 }
 
 """
@@ -1613,6 +1848,37 @@ input json_comparison_exp {
   _nin: [json!]
 }
 
+scalar jsonb
+
+"""
+expression to compare columns of type jsonb. All fields are combined with logical 'AND'.
+"""
+input jsonb_comparison_exp {
+  """is the column contained in the given json value"""
+  _contained_in: jsonb
+
+  """does the column contain the given json value at the top level"""
+  _contains: jsonb
+  _eq: jsonb
+  _gt: jsonb
+  _gte: jsonb
+
+  """does the string exist as a top-level key in the column"""
+  _has_key: String
+
+  """do all of these strings exist as top-level keys in the column"""
+  _has_keys_all: [String!]
+
+  """do any of these strings exist as top-level keys in the column"""
+  _has_keys_any: [String!]
+  _in: [jsonb!]
+  _is_null: Boolean
+  _lt: jsonb
+  _lte: jsonb
+  _neq: jsonb
+  _nin: [jsonb!]
+}
+
 """
 columns and relationships of "me"
 """
@@ -1823,6 +2089,19 @@ type mutation_root {
   delete single row from the table: "ColorAspect"
   """
   delete_ColorAspect_by_pk(mask: Int!): ColorAspect
+
+  """
+  delete data from the table: "GuildStatus"
+  """
+  delete_GuildStatus(
+    """filter the rows which have to be deleted"""
+    where: GuildStatus_bool_exp!
+  ): GuildStatus_mutation_response
+
+  """
+  delete single row from the table: "GuildStatus"
+  """
+  delete_GuildStatus_by_pk(status: String!): GuildStatus
 
   """
   delete data from the table: "GuildType"
@@ -2091,6 +2370,28 @@ type mutation_root {
     """on conflict condition"""
     on_conflict: ColorAspect_on_conflict
   ): ColorAspect
+
+  """
+  insert data into the table: "GuildStatus"
+  """
+  insert_GuildStatus(
+    """the rows to be inserted"""
+    objects: [GuildStatus_insert_input!]!
+
+    """on conflict condition"""
+    on_conflict: GuildStatus_on_conflict
+  ): GuildStatus_mutation_response
+
+  """
+  insert a single row into the table: "GuildStatus"
+  """
+  insert_GuildStatus_one(
+    """the row to be inserted"""
+    object: GuildStatus_insert_input!
+
+    """on conflict condition"""
+    on_conflict: GuildStatus_on_conflict
+  ): GuildStatus
 
   """
   insert data into the table: "GuildType"
@@ -2539,6 +2840,26 @@ type mutation_root {
   ): ColorAspect
 
   """
+  update data of the table: "GuildStatus"
+  """
+  update_GuildStatus(
+    """sets the columns of the filtered rows to the given values"""
+    _set: GuildStatus_set_input
+
+    """filter the rows which have to be updated"""
+    where: GuildStatus_bool_exp!
+  ): GuildStatus_mutation_response
+
+  """
+  update single row of the table: "GuildStatus"
+  """
+  update_GuildStatus_by_pk(
+    """sets the columns of the filtered rows to the given values"""
+    _set: GuildStatus_set_input
+    pk_columns: GuildStatus_pk_columns_input!
+  ): GuildStatus
+
+  """
   update data of the table: "GuildType"
   """
   update_GuildType(
@@ -2662,6 +2983,28 @@ type mutation_root {
   update data of the table: "guild"
   """
   update_guild(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: guild_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: guild_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from
+    the end). throws an error if top level container is not an array
+    """
+    _delete_elem: guild_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: guild_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: guild_prepend_input
+
     """sets the columns of the filtered rows to the given values"""
     _set: guild_set_input
 
@@ -2693,6 +3036,28 @@ type mutation_root {
   update single row of the table: "guild"
   """
   update_guild_by_pk(
+    """append existing jsonb value of filtered columns with new jsonb value"""
+    _append: guild_append_input
+
+    """
+    delete the field or element with specified path (for JSON arrays, negative integers count from the end)
+    """
+    _delete_at_path: guild_delete_at_path_input
+
+    """
+    delete the array element with specified index (negative integers count from
+    the end). throws an error if top level container is not an array
+    """
+    _delete_elem: guild_delete_elem_input
+
+    """
+    delete key/value pair or string element. key/value pairs are matched based on their key value
+    """
+    _delete_key: guild_delete_key_input
+
+    """prepend existing jsonb value of filtered columns with new jsonb value"""
+    _prepend: guild_prepend_input
+
     """sets the columns of the filtered rows to the given values"""
     _set: guild_set_input
     pk_columns: guild_pk_columns_input!
@@ -3027,6 +3392,7 @@ type player {
 
   """Remote relationship field"""
   daohausMemberships: [Member!]!
+  discord_id: String
   ethereum_address: String
 
   """An array relationship"""
@@ -3413,6 +3779,7 @@ input player_bool_exp {
   availability_hours: Int_comparison_exp
   color_mask: Int_comparison_exp
   created_at: timestamptz_comparison_exp
+  discord_id: String_comparison_exp
   ethereum_address: String_comparison_exp
   guilds: guild_player_bool_exp
   id: uuid_comparison_exp
@@ -3444,6 +3811,9 @@ enum player_constraint {
 
   """unique or primary key constraint"""
   Player_username_unique_key
+
+  """unique or primary key constraint"""
+  player_discord_id_key
 }
 
 """
@@ -3466,6 +3836,7 @@ input player_insert_input {
   availability_hours: Int
   color_mask: Int
   created_at: timestamptz
+  discord_id: String
   ethereum_address: String
   guilds: guild_player_arr_rel_insert_input
   id: uuid
@@ -3487,6 +3858,7 @@ type player_max_fields {
   availability_hours: Int
   color_mask: Int
   created_at: timestamptz
+  discord_id: String
   ethereum_address: String
   id: uuid
   player_type_id: Int
@@ -3505,6 +3877,7 @@ input player_max_order_by {
   availability_hours: order_by
   color_mask: order_by
   created_at: order_by
+  discord_id: order_by
   ethereum_address: order_by
   id: order_by
   player_type_id: order_by
@@ -3521,6 +3894,7 @@ type player_min_fields {
   availability_hours: Int
   color_mask: Int
   created_at: timestamptz
+  discord_id: String
   ethereum_address: String
   id: uuid
   player_type_id: Int
@@ -3539,6 +3913,7 @@ input player_min_order_by {
   availability_hours: order_by
   color_mask: order_by
   created_at: order_by
+  discord_id: order_by
   ethereum_address: order_by
   id: order_by
   player_type_id: order_by
@@ -3588,6 +3963,7 @@ input player_order_by {
   availability_hours: order_by
   color_mask: order_by
   created_at: order_by
+  discord_id: order_by
   ethereum_address: order_by
   guilds_aggregate: guild_player_aggregate_order_by
   id: order_by
@@ -3623,6 +3999,9 @@ enum player_select_column {
 
   """column name"""
   created_at
+
+  """column name"""
+  discord_id
 
   """column name"""
   ethereum_address
@@ -3662,6 +4041,7 @@ input player_set_input {
   availability_hours: Int
   color_mask: Int
   created_at: timestamptz
+  discord_id: String
   ethereum_address: String
   id: uuid
   player_type_id: Int
@@ -4258,6 +4638,9 @@ enum player_update_column {
   created_at
 
   """column name"""
+  discord_id
+
+  """column name"""
   ethereum_address
 
   """column name"""
@@ -4611,6 +4994,49 @@ type query_root {
 
   """fetch data from the table: "ColorAspect" using primary key columns"""
   ColorAspect_by_pk(mask: Int!): ColorAspect
+
+  """
+  fetch data from the table: "GuildStatus"
+  """
+  GuildStatus(
+    """distinct select on columns"""
+    distinct_on: [GuildStatus_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [GuildStatus_order_by!]
+
+    """filter the rows returned"""
+    where: GuildStatus_bool_exp
+  ): [GuildStatus!]!
+
+  """
+  fetch aggregated fields from the table: "GuildStatus"
+  """
+  GuildStatus_aggregate(
+    """distinct select on columns"""
+    distinct_on: [GuildStatus_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [GuildStatus_order_by!]
+
+    """filter the rows returned"""
+    where: GuildStatus_bool_exp
+  ): GuildStatus_aggregate!
+
+  """fetch data from the table: "GuildStatus" using primary key columns"""
+  GuildStatus_by_pk(status: String!): GuildStatus
 
   """
   fetch data from the table: "GuildType"
@@ -7515,6 +7941,49 @@ type subscription_root {
   ColorAspect_by_pk(mask: Int!): ColorAspect
 
   """
+  fetch data from the table: "GuildStatus"
+  """
+  GuildStatus(
+    """distinct select on columns"""
+    distinct_on: [GuildStatus_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [GuildStatus_order_by!]
+
+    """filter the rows returned"""
+    where: GuildStatus_bool_exp
+  ): [GuildStatus!]!
+
+  """
+  fetch aggregated fields from the table: "GuildStatus"
+  """
+  GuildStatus_aggregate(
+    """distinct select on columns"""
+    distinct_on: [GuildStatus_select_column!]
+
+    """limit the number of rows returned"""
+    limit: Int
+
+    """skip the first n rows. Use only with order_by"""
+    offset: Int
+
+    """sort the rows by one or more columns"""
+    order_by: [GuildStatus_order_by!]
+
+    """filter the rows returned"""
+    where: GuildStatus_bool_exp
+  ): GuildStatus_aggregate!
+
+  """fetch data from the table: "GuildStatus" using primary key columns"""
+  GuildStatus_by_pk(status: String!): GuildStatus
+
+  """
   fetch data from the table: "GuildType"
   """
   GuildType(
@@ -8322,6 +8791,8 @@ input UpdateQuestCompletionInput {
 
 type UpdateQuestCompletionOutput {
   error: String
+  quest_completion: quest_completion
+  quest_completion_id: uuid
   success: Boolean!
 }
 

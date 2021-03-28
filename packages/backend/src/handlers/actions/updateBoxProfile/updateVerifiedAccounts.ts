@@ -1,6 +1,9 @@
 import Box from '3box';
 
-import { AccountType_Enum, UpdateBoxProfileResponse } from '../../../lib/autogen/hasura-sdk';
+import {
+  AccountType_Enum,
+  UpdateBoxProfileResponse,
+} from '../../../lib/autogen/hasura-sdk';
 import { client } from '../../../lib/hasuraClient';
 
 export async function updateVerifiedAccounts(
@@ -31,6 +34,7 @@ export async function updateVerifiedAccounts(
     if (result.insert_player_account?.affected_rows) {
       updatedProfiles.push('github');
     } else {
+      // eslint-disable-next-line no-console
       console.warn(
         `Unable to insert Github user ${verifiedAccounts.github.username} for playerId ${playerId}`,
       );
@@ -50,6 +54,7 @@ export async function updateVerifiedAccounts(
     if (result.insert_player_account?.affected_rows) {
       updatedProfiles.push('twitter');
     } else {
+      // eslint-disable-next-line no-console
       console.warn(
         `Unable to insert Twitter user ${verifiedAccounts.twitter.username} for playerId ${playerId}`,
       );

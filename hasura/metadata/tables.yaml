@@ -30,6 +30,10 @@
       filter: {}
 - table:
     schema: public
+    name: GuildStatus
+  is_enum: true
+- table:
+    schema: public
     name: GuildType
   is_enum: true
   array_relationships:
@@ -128,30 +132,34 @@
   - role: player
     permission:
       columns:
-      - id
-      - type
-      - name
-      - logo
       - description
-      - join_button_url
-      - moloch_address
-      - discord_invite_url
-      - website_url
+      - discord_id
+      - discord_metadata
       - guildname
+      - id
+      - join_button_url
+      - logo
+      - moloch_address
+      - name
+      - status
+      - type
+      - website_url
       filter: {}
   - role: public
     permission:
       columns:
-      - id
-      - type
-      - name
-      - logo
       - description
-      - join_button_url
-      - moloch_address
-      - discord_invite_url
-      - website_url
+      - discord_id
+      - discord_metadata
       - guildname
+      - id
+      - join_button_url
+      - logo
+      - moloch_address
+      - name
+      - status
+      - type
+      - website_url
       filter: {}
 - table:
     schema: public
@@ -484,6 +492,7 @@
       - guild_id
       - id
       filter: {}
+      allow_aggregations: true
   - role: public
     permission:
       columns:
@@ -498,6 +507,7 @@
       - status
       - repetition
       filter: {}
+      allow_aggregations: true
   update_permissions:
   - role: player
     permission:
@@ -505,13 +515,22 @@
       - cooldown
       - description
       - external_link
+      - guild_id
       - repetition
       - status
       - title
       filter:
         created_by_player_id:
           _eq: X-Hasura-User-Id
-      check: null
+      check:
+        _or:
+        - repetition:
+            _ne: RECURRING
+        - _and:
+          - repetition:
+              _eq: RECURRING
+          - cooldown:
+              _is_null: false
 - table:
     schema: public
     name: quest_completion
@@ -529,12 +548,13 @@
   - role: player
     permission:
       columns:
-      - submitted_at
+      - completed_by_player_id
+      - id
+      - quest_id
       - status
       - submission_link
       - submission_text
-      - completed_by_player_id
-      - quest_id
+      - submitted_at
       filter: {}
   - role: public
     permission:
