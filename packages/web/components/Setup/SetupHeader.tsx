@@ -1,8 +1,9 @@
-import { Box, Flex, Grid, Image, ResponsiveText } from '@metafam/ds';
+import { Box, Flex, Grid, ResponsiveText } from '@metafam/ds';
 import BackImage from 'assets/Back.svg';
 import LogoImage from 'assets/logo.png';
 import SkipImage from 'assets/Skip.svg';
 import { FlexContainer } from 'components/Container';
+import Image from 'next/image';
 import { useSetupFlow } from 'contexts/SetupContext';
 import React from 'react';
 
@@ -14,7 +15,7 @@ export const SetupHeader: React.FC = () => {
   return (
     <Grid templateColumns="0.5fr 1fr 1fr 1fr 0.5fr" gap="1rem" w="100%">
       <FlexContainer justify="flex-end" onClick={onBackPress} cursor="pointer">
-        <Image src={BackImage} h="1rem" alt="Back" />
+        <Image src={BackImage} alt="some text" width="100" height="100" />
       </FlexContainer>
       {options.sections.map((option, id) => (
         <SectionProgress

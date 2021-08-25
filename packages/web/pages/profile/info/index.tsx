@@ -17,7 +17,7 @@ import { useRef } from 'react';
 
 const InfoPage = () => {
   const [did, setDid] = useState<string>();
-  const image = useRef();
+  const image = useRef<any>();
   const {
     handleSubmit,
     register,
@@ -25,6 +25,7 @@ const InfoPage = () => {
     setValue
   } = useForm();
   const { ceramic, idx, address, storageClient } = useWeb3();
+  console.log(did);
 
   const handleFileUpload = useCallback((event: any) => {
     console.log(event.target.files)
