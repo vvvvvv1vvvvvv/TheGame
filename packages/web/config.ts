@@ -21,4 +21,5 @@ export const CONFIG = {
   publicURL: process.env.NEXT_PUBLIC_VERCEL_URL || 'http://localhost:3000',
   gaId: process.env.NEXT_PUBLIC_GA4_ID || undefined,
   clarityId: process.env.NEXT_CLARITY_ID || undefined,
+  web3StorageToken: process.env.WEB3_STORAGE_TOKEN || ''
 };

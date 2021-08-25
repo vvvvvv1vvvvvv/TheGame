@@ -17,7 +17,7 @@ import React, {
   useState,
 } from 'react';
 import Web3Modal from 'web3modal';
-
+import { Web3Storage } from 'web3.storage'
 import { CONFIG } from '../config';
 import { useMemo } from 'react';
 import CeramicClient from '@ceramicnetwork/http-client';
@@ -32,6 +32,7 @@ export type Web3ContextType = {
   connected: boolean;
   address: string | null;
   authToken: string | null;
+  storageClient: Web3Storage | null;
 };
 
 export const Web3Context = createContext<Web3ContextType>({
@@ -44,7 +45,12 @@ export const Web3Context = createContext<Web3ContextType>({
   connected: false,
   address: null,
   authToken: null,
+  storageClient: null
 });
+
+export const makeStorageClient = () => {
+  return new Web3Storage({ token: CONFIG.web3StorageToken })
+}
 
 const providerOptions = {
   walletconnect: {
@@ -103,6 +109,8 @@ export const Web3ContextProvider: React.FC<Web3ContextProviderOptions> = ({
   const calledOnce = useRef<boolean>(false);
   const ceramic = useMemo(() => new Ceramic(process.env.CERAMIC_URL), []);
   const idx = new IDX({ ceramic });
+
+  const storageClient = useMemo(() => makeStorageClient(), []);
 
   const disconnect = useCallback(() => {
     if (web3Modal === false) return;
@@ -169,6 +177,7 @@ export const Web3ContextProvider: React.FC<Web3ContextProviderOptions> = ({
         connecting,
         address,
         authToken,
+        storageClient
       }}
     >
       {children}
