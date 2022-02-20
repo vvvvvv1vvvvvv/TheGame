@@ -2365,7 +2365,7 @@ input GuildDao {
 }
 
 input GuildInfo {
-  daos: [GuildDao]
+  daos: [GuildDao!]
   description: String
   discordAdminRoles: [String]!
   discordInviteURL: String
