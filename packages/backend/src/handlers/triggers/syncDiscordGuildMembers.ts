@@ -69,8 +69,9 @@ const syncGuildMembers = async (guild: GuildFragment) => {
     return;
 
   // at least one membership role must be defined
-  const discordServerMembershipRoles = (guildMetadata.discord_metadata as GuildDiscordMetadata)
-    .membershipRoleIds;
+  const discordServerMembershipRoles = (
+    guildMetadata.discord_metadata as GuildDiscordMetadata
+  ).membershipRoleIds;
   if (
     discordServerMembershipRoles == null ||
     discordServerMembershipRoles?.length === 0
@@ -133,12 +134,11 @@ const syncGuildMembers = async (guild: GuildFragment) => {
     discordIds: playerDiscordIdsToAdd,
   });
 
-  const playersToAdd: Guild_Player_Insert_Input[] = getPlayerIdsResponse.player.map(
-    (player) => ({
+  const playersToAdd: Guild_Player_Insert_Input[] =
+    getPlayerIdsResponse.player.map((player) => ({
       guild_id: guild.id,
       player_id: player.id,
-    }),
-  );
+    }));
 
   const syncResponse: SyncGuildMembersMutation = await client.SyncGuildMembers({
     memberDiscordIdsToRemove: playersToRemove,

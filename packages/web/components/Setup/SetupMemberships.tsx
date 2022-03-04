@@ -70,7 +70,7 @@ export const SetupMemberships: React.FC<SetupMembershipsProps> = ({
               We found the following guilds associated with your account and
               automatically added them to your profile.
             </Text>
-            <Wrap columns={2} spacing={4} justify="center">
+            <Wrap spacing={4} justify="center">
               {memberships?.map((member) => (
                 <WrapItem key={member.id}>
                   <MembershipListing {...{ member }} />
@@ -130,17 +130,16 @@ const MembershipListing: React.FC<MembershipListingProps> = ({
           textTransform="uppercase"
           fontSize="xs"
           color={daoURL ? 'cyanText' : 'white'}
-          justify="center"
-          align="center"
+          textAlign="center"
         >
           {title ?? (
-            <Text as={React.Fragment}>
+            <>
               Unknown{' '}
               <Text as="span" textTransform="capitalize">
                 {chain}
               </Text>{' '}
               DAO
-            </Text>
+            </>
           )}
           <ChainIcon {...{ chain }} mx={2} boxSize={4} />
         </Heading>

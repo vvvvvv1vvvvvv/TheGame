@@ -36,9 +36,8 @@ const saveGuild = async (playerId: string, guildInfo: GuildInfo) => {
   if (metadata == null || metadata.length === 0) {
     throw new Error('No pending guild with that ID exists.');
   }
-  const [
-    { creator_id: creatorId, discord_metadata: discordMetadata },
-  ] = metadata;
+  const [{ creator_id: creatorId, discord_metadata: discordMetadata }] =
+    metadata;
 
   if (creatorId !== playerId) {
     throw new Error(
@@ -49,7 +48,7 @@ const saveGuild = async (playerId: string, guildInfo: GuildInfo) => {
   const updatedData: Guild_Set_Input = {
     guildname: guildInfo.guildname,
     name: guildInfo.name,
-    type: (guildInfo.type as unknown) as GuildType_Enum,
+    type: guildInfo.type as unknown as GuildType_Enum,
     description: guildInfo.description,
     discord_invite_url: guildInfo.discordInviteURL,
     join_button_url: guildInfo.joinURL,
